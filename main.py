@@ -1,16 +1,6 @@
 import plotly.express as px
 import streamlit as st
-
-
-def get_data(days):
-    # today = datetime.now().date().isoformat()
-
-    dates = ["1968-05-07", "1968-05-08", "1968-05-09"]
-
-    temperatures = [25, 30, 22]
-
-    return [dates, temperatures]
-
+from backend import get_data
 
 st.set_page_config(layout="centered")
 
@@ -21,14 +11,26 @@ place = st.text_input(label="Place:", placeholder="Enter a place")
 days = st.slider(label="Forecast Days:", min_value=1, max_value=5,
                  help="Select the number of forecasted days")
 
-type_data = st.selectbox(label="Select data to view: ",
+type_view = st.selectbox(label="Select data to view: ",
                          options=["Temperature", "Sky"])
 
-dates, temperatures = get_data(days)
+if place:
+    try:
+        time_view, data = get_data(place, days, type_view)
 
-st.subheader(f"{type_data} for the {days} next day(s) in {place}")
+        st.subheader(f"{type_view} for the {days} next day(s) in {place}")
 
-figure = px.line(x=dates, y=temperatures,
-                 labels={"x": "Date","y": "Temperature (ºC)"})
+        if type_view == "Temperature":
+            figure = px.line(x=time_view, y=data,
+                             labels={"x": f"Next {days} days", "y": "Temperature "
+                                                                    "(ºC)"})
+            st.plotly_chart(figure)
 
-st.plotly_chart(figure)
+        if type_view == "Sky":
+            images = {'Clear': "images/clear.png", 'Clouds': "images/cloud.png",
+                      'Rain': "images/rain.png", 'Snow': "images/snow.png"}
+            image_paths = [images[condition] for condition in data]
+            st.image(image_paths, caption=time_view, width=115)
+    except:
+        st.write("The place entered not exist")
+
